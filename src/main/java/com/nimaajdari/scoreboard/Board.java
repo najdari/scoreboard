@@ -1,6 +1,7 @@
 package com.nimaajdari.scoreboard;
 
 import com.nimaajdari.scoreboard.exception.GameNotFoundException;
+import com.nimaajdari.scoreboard.exception.TeamAlreadyInGameException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -11,6 +12,12 @@ public class Board {
   private final List<Game> games = new ArrayList<>();
 
   public void startGame(String homeTeam, String awayTeam) {
+    findGameByTeam(homeTeam).ifPresent(game -> {
+      throw TeamAlreadyInGameException.of(homeTeam, game);
+    });
+    findGameByTeam(awayTeam).ifPresent(game -> {
+      throw TeamAlreadyInGameException.of(awayTeam, game);
+    });
     Game game = new Game(homeTeam, awayTeam);
     games.add(game);
   }
@@ -25,8 +32,7 @@ public class Board {
                           int homeTeamScore, int awayTeamScore) {
     Game game = findGame(homeTeam, awayTeam)
         .orElseThrow(() -> GameNotFoundException.of(homeTeam, awayTeam));
-    game.setHomeTeamScore(homeTeamScore);
-    game.setAwayTeamScore(awayTeamScore);
+    game.setScore(homeTeamScore, awayTeamScore);
   }
 
   public List<Game> gamesSummary() {
@@ -40,6 +46,13 @@ public class Board {
     return games.stream()
         .filter(game -> game.getHomeTeam().equals(homeTeam)
             && game.getAwayTeam().equals(awayTeam))
+        .findFirst();
+  }
+
+  private Optional<Game> findGameByTeam(String team) {
+    return games.stream()
+        .filter(game -> game.getHomeTeam().equals(team)
+            || game.getAwayTeam().equals(team))
         .findFirst();
   }
 

@@ -1,5 +1,6 @@
 package com.nimaajdari.scoreboard;
 
+import com.nimaajdari.scoreboard.exception.InvalidScoreException;
 import java.time.LocalDateTime;
 
 public class Game {
@@ -42,13 +43,28 @@ public class Game {
     return createDateTime;
   }
 
-  public Game setHomeTeamScore(int homeTeamScore) {
+  public Game setScore(int homeTeamScore, int awayTeamScore) {
+    if (homeTeamScore < 0 || homeTeamScore < this.homeTeamScore) {
+      throw new InvalidScoreException(
+          "invalid home team score %d for game %s".formatted(homeTeamScore, this.toString()));
+    }
+    if (awayTeamScore < 0 || awayTeamScore < this.awayTeamScore) {
+      throw new InvalidScoreException(
+          "invalid away team score %d for game %s".formatted(awayTeamScore, this.toString()));
+    }
     this.homeTeamScore = homeTeamScore;
+    this.awayTeamScore = awayTeamScore;
     return this;
   }
 
-  public Game setAwayTeamScore(int awayTeamScore) {
-    this.awayTeamScore = awayTeamScore;
-    return this;
+  @Override
+  public String toString() {
+    return "Game{" +
+        "homeTeam='" + homeTeam + '\'' +
+        ", awayTeam='" + awayTeam + '\'' +
+        ", homeTeamScore=" + homeTeamScore +
+        ", awayTeamScore=" + awayTeamScore +
+        ", createDateTime=" + createDateTime +
+        '}';
   }
 }

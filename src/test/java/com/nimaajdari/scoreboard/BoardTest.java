@@ -1,7 +1,10 @@
 package com.nimaajdari.scoreboard;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.nimaajdari.scoreboard.exception.GameNotFoundException;
+import com.nimaajdari.scoreboard.exception.TeamAlreadyInGameException;
 import org.junit.jupiter.api.Test;
 
 public class BoardTest {
@@ -29,6 +32,22 @@ public class BoardTest {
   }
 
   @Test
+  void startingGameTwiceThrowsException() {
+    board.startGame(GERMANY, SPAIN);
+    assertThatThrownBy(() -> board.startGame(GERMANY, SPAIN))
+        .isInstanceOf(TeamAlreadyInGameException.class)
+        .hasMessageContaining(GERMANY, SPAIN);
+  }
+
+  @Test
+  void startingGameWithTeamAlreadyInAnotherGameThrowsException() {
+    board.startGame(GERMANY, SPAIN);
+    assertThatThrownBy(() -> board.startGame(USA, SPAIN))
+        .isInstanceOf(TeamAlreadyInGameException.class)
+        .hasMessageContaining(GERMANY, SPAIN);
+  }
+
+  @Test
   void endingSingleGameOnBoardMakesBoardEmpty() {
     board.startGame(GERMANY, SPAIN);
     board.endGame(GERMANY, SPAIN);
@@ -37,13 +56,31 @@ public class BoardTest {
 
   @Test
   void endingGameRemovesFromItBoard() {
-    board.startGame("a", "b");
-    board.startGame("c", "d");
-    board.startGame("e", "f");
+    board.startGame(GERMANY, SPAIN);
+    board.startGame(PORTUGAL, JAPAN);
+    board.startGame(USA, ARGENTINA);
 
-    board.endGame("c", "d");
+    board.endGame(PORTUGAL, JAPAN);
 
     assertThat(board.gamesSummary()).hasSize(2);
+  }
+
+  @Test
+  void endingNonExistentGameThrowsException() {
+    board.startGame(GERMANY, SPAIN);
+    board.startGame(PORTUGAL, JAPAN);
+    board.startGame(USA, ARGENTINA);
+
+    assertThatThrownBy(() -> board.endGame("A", "B"))
+        .isInstanceOf(GameNotFoundException.class)
+        .hasMessageContaining("A", "B");
+  }
+
+  @Test
+  void endingGameOnEmptyBoardThrowsException() {
+    assertThatThrownBy(() -> board.endGame(ARGENTINA, SPAIN))
+        .isInstanceOf(GameNotFoundException.class)
+        .hasMessageContaining(ARGENTINA, SPAIN);
   }
 
   @Test
@@ -55,6 +92,26 @@ public class BoardTest {
         .allMatch(game -> game.getAwayTeamScore() == 1)
         .allMatch(game -> game.getHomeTeamScore() == 2)
         .allMatch(game -> game.getTotalScore() == 3);
+  }
+
+  @Test
+  void updatingScoreForNonExistentGameThrowsException() {
+    board.startGame(GERMANY, SPAIN);
+    board.startGame(PORTUGAL, JAPAN);
+    board.startGame(USA, ARGENTINA);
+
+    assertThatThrownBy(
+        () -> board.updateScore(ARGENTINA, SPAIN, 1 , 1))
+        .isInstanceOf(GameNotFoundException.class)
+        .hasMessageContaining(ARGENTINA, SPAIN);
+  }
+
+  @Test
+  void updatingScoreOnEmptyBoardThrowsException() {
+    assertThatThrownBy(
+        () -> board.updateScore(ARGENTINA, SPAIN, 1 , 1))
+        .isInstanceOf(GameNotFoundException.class)
+        .hasMessageContaining(ARGENTINA, SPAIN);
   }
 
   @Test
